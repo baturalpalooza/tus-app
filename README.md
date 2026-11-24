@@ -2,8 +2,8 @@
 
 A private study tracker for TUS preparation. Phone-first web app (PWA), installed from Safari with **Share → Add to Home Screen**.
 
-- **Salon** (opener): time since last study, Anki chain, today/week, quick add.
-- **Mutfak** (detail): chain + subjects you have neglected, the 25 Şampiyonların Notu volumes (start → fill → read 1/2/3), subject pages with Anki sub-deck state and an editable log.
+- **Ana sayfa** (opener): time since last study, Anki chain, today/week, quick add.
+- **Arşiv** (detail): chain, pages (filling vs tekrar), Anki deck progress, subjects you have neglected, the 25 Şampiyonların Notu volumes (start → fill → read 1/2/3), subject pages with Anki sub-deck state and an editable log.
 
 This repo holds code only. **No personal data lives here.** The data lives in the private repo `baturalpalooza/tus-data` as `data.json`, read and written with a fine-grained GitHub token that is stored only on each device.
 
@@ -29,10 +29,11 @@ Append-only event log. Never edit or remove an event: to undo, set `"deleted": t
 
 | `type` | Extra fields |
 |---|---|
-| `study` | `subject`, `minutes`, optional `questions`, optional `note` |
-| `anki` | optional `minutes` (30 or 60) |
+| `study` | `subject`, `minutes`, `kind` (`fill` = Cortex video + writing into the book, `read` = tekrar/reading), optional `pages`, `questions`, `note` |
+| `anki` | optional `cards`, `minutes` (chain darkness: cards <150 / 150–399 / 400+) |
 | `book` | `book` (`<subject>-<vol>`, e.g. `patoloji-1`), `action`: `start` \| `filled` \| `readStart` \| `readDone` |
 | `deck` | `subject`, `state`: `locked` \| `open` \| `newDone` \| `review` |
+| `deckCount` | `subject`, `seen` (cards studied at least once), `total` (cards in the sub-deck) |
 
 Subject ids: `anatomi, fizyoloji, biyokimya, mikrobiyoloji, patoloji, farmakoloji, dahiliye, pediatri, genel-cerrahi, kadin-dogum, kucuk-stajlar`. Volumes: Anatomi 1; Fizyoloji, Biyokimya, Mikrobiyoloji, Patoloji, Farmakoloji 2 each; Dahiliye 4; Pediatri 3; Genel Cerrahi 2; Kadın Doğum 2; Küçük Stajlar 3 (25 total).
 

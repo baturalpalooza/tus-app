@@ -87,6 +87,7 @@
     var lastStudy = null;
     var books = {};
     var decks = {};
+    var deckCounts = {}; // subject -> {seen, total, date}: Anki sub-deck progress
     var studies = [];
     var pagesFilled = {}, pagesRead = {};
 
@@ -118,6 +119,8 @@
         else if (e.action === 'readDone') { b.started = true; b.filled = true; b.reading = false; b.reads += 1; b.stageSince = e.date; }
       } else if (e.type === 'deck' && e.subject) {
         decks[e.subject] = e.state;
+      } else if (e.type === 'deckCount' && e.subject) {
+        deckCounts[e.subject] = { seen: e.seen || 0, total: e.total || 0, date: e.date };
       }
     });
 
@@ -148,7 +151,7 @@
       studyByDay: studyByDay, todayMinutes: studyByDay[today] || 0, week: week, prevWeek: prevWeek, total: total,
       lastStudy: lastStudy, gaps: gaps, books: books, running: running, filledCount: filledCount, bookCount: allBooks().length,
       decks: decks, studies: studies, questionsBySubject: questionsBySubject,
-      weekFill: weekFill, weekRead: weekRead, weekCards: weekCards,
+      weekFill: weekFill, weekRead: weekRead, weekPages: weekFill + weekRead, weekCards: weekCards, deckCounts: deckCounts,
       totalFill: sumMap(pagesFilled, '0', '9'), totalRead: sumMap(pagesRead, '0', '9')
     };
   }
@@ -191,7 +194,11 @@
     var studied = s.gaps.filter(function (g) { return g.days !== null; }).sort(function (a, b) { return b.days - a.days; });
     if (studied.length && studied[0].days >= 3) out.push(studied[0].days + ' gündür ' + studied[0].name + ' çalışmadın.');
     if (s.streak >= 2) out.push('Anki zincirin ' + s.streak + ' gün.' + (s.bestStreak > s.streak ? ' Rekorun ' + s.bestStreak + ' gün.' : ' Bu senin rekorun.'));
-    if (s.weekFill || s.weekRead) out.push('Bu hafta ' + [s.weekFill ? s.weekFill + ' sayfa doldurdun' : '', s.weekRead ? s.weekRead + ' sayfa okudun' : ''].filter(Boolean).join(', ') + '.');
+    if (s.weekFill || s.weekRead) out.push('Bu hafta ' + s.weekPages + ' sayfa çalıştın: ' + s.weekFill + ' sayfa doldurma, ' + s.weekRead + ' sayfa tekrar.');
+    Object.keys(s.deckCounts).forEach(function (k) {
+      var d = s.deckCounts[k], sub = subjectById(k);
+      if (d.total && sub) out.push(sub.name + ' Anki destesinin %' + Math.round(d.seen / d.total * 100) + '’ini gördün (' + d.seen + ' / ' + d.total + ' kart).');
+    });
     if (s.weekCards) out.push('Son 7 günde Anki’de ' + s.weekCards + ' kart çevirdin.');
     if (s.total >= 60) out.push('Toplam ' + Math.round(s.total / 60) + ' saat çalıştın.');
     if (s.filledCount) out.push(s.bookCount + ' ciltten ' + s.filledCount + ' tanesini doldurdun.');

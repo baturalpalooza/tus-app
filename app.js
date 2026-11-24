@@ -149,12 +149,14 @@
           stat('Elindeki kitap', runningBook ? runningBook.name + ' ' + runningBook.vol : '—', runningBook ? (s.books[runningBook.key].reading ? 0.8 : 0.4) : 0) +
           stat('En uzak ders', far ? far.days + ' gün' : '—', far ? far.days / 30 : 0, far ? far.name : '') +
         '</div>' +
+        '<div class="pages"><span class="mono">Bu hafta · sayfa</span><div class="pg3">' +
+          '<div><b>' + s.weekPages + '</b><span>toplam</span></div><div><b>' + s.weekFill + '</b><span>doldurma</span></div><div><b>' + s.weekRead + '</b><span>tekrar</span></div></div></div>' +
         '<div class="fact"><span class="mono">Bu arada</span><p>' + esc(fact) + '</p></div>' +
         '<div class="progress"><span class="mono">% Kitaplar dolduruldu</span><div class="bar"><i style="width:' + pct + '%"></i><span>' + pct + '<small>%  ·  ' + s.filledCount + '/' + s.bookCount + ' cilt</small></span></div></div>' +
         '<div class="actions"><button class="btn dark" data-act="add">+ Kayıt</button>' +
           (s.ankiToday ? '<button class="btn done" data-act="anki-edit">Anki ✓' + (s.anki[s.today].cards ? ' · ' + s.anki[s.today].cards : '') + '</button>' : '<button class="btn" data-act="anki">Anki ✓</button>') + '</div>' +
       '</div>' +
-      '<button class="mutfak-strip" data-act="mutfak"><span class="grip"></span><b>↑ Mutfak</b><span>Zincir · Kitaplar · Dersler</span></button>' +
+      '<button class="mutfak-strip" data-act="mutfak"><span class="grip"></span><b>↑ Arşiv</b><span>Zincir · Kitaplar · Dersler</span></button>' +
     '</div>';
   }
   function stat(label, value, p, sub) {
@@ -168,10 +170,10 @@
       return '<button data-act="tab" data-v="' + t + '" class="' + (ui.tab === t && !ui.subject ? 'on' : '') + '">' + { zincir: 'Zincir', kitaplar: 'Kitaplar', dersler: 'Dersler' }[t] + '</button>';
     }).join('');
     return '<div class="screen mutfak">' +
-      '<div class="m-top"><div class="m-top-row"><span class="mm" style="font-weight:700">TUS / Mutfak</span>' +
+      '<div class="m-top"><div class="m-top-row"><span class="mm" style="font-weight:700">TUS / Arşiv</span>' +
       '<button class="mm muted" data-act="settings">⚙ Ayarlar</button></div><div class="m-tabs">' + tabs + '</div></div>' +
-      body +
-      '<button class="back" data-act="salon">↓ Salon</button></div>';
+      '<div class="m-body">' + body + '</div>' +
+      '<button class="back" data-act="salon">↓ Ana sayfa</button></div>';
   }
 
   function renderZincir(s) {
@@ -188,9 +190,27 @@
       '<div style="display:flex;align-items:baseline;gap:10px"><span class="hugenum">' + s.streak + '</span><span style="font-size:16px">gündür kırılmadı</span></div>' +
       '<div class="m-chain" style="grid-template-columns:repeat(26,1fr)">' + chainCells(s, 26) + '</div>' +
       '<div class="legend" style="justify-content:space-between"><span>Son 7 gün: ' + (s.weekCards || 0) + ' kart</span><span>Az <i class="l1"></i><i class="l2"></i><i class="l3"></i> çok</span></div>' +
-      ((s.weekFill || s.weekRead) ? '<div class="legend"><span>Bu hafta: ' + s.weekFill + ' s doldurma · ' + s.weekRead + ' s okuma</span></div>' : '') + '</div>' +
-      '<div class="sec"><div class="sec-h"><span class="mm"><b>02</b>Uzak kaldıkların</span></div>' + rows + '</div>' +
-      (cfg.mutfakForm ? '' : '<div class="sec" style="padding-top:14px;padding-bottom:14px"><span class="muted" style="font-size:14px">Detaylı kayıt gizli. Ayarlar → Mutfakta kayıt göster.</span></div>');
+      '</div>' +
+      '<div class="sec"><div class="sec-h"><span class="mm"><b>02</b>Sayfalar</span><span class="mm muted">Bu hafta / toplam</span></div>' +
+      '<div class="kpis" style="margin-top:0"><div><span class="mm muted" style="font-size:10px">Doldurma</span><b>' + s.weekFill + '</b><span class="mm muted" style="font-size:10px;text-transform:none">' + s.totalFill + ' toplam</span></div>' +
+      '<div><span class="mm muted" style="font-size:10px">Tekrar</span><b>' + s.weekRead + '</b><span class="mm muted" style="font-size:10px;text-transform:none">' + s.totalRead + ' toplam</span></div>' +
+      '<div><span class="mm muted" style="font-size:10px">Hepsi</span><b>' + s.weekPages + '</b><span class="mm muted" style="font-size:10px;text-transform:none">' + (s.totalFill + s.totalRead) + ' toplam</span></div></div></div>' +
+      '<div class="sec"><div class="sec-h"><span class="mm"><b>03</b>Anki desteleri</span><span class="mm muted">Görülen / toplam</span></div>' + deckRows(s) + '</div>' +
+      '<div class="sec"><div class="sec-h"><span class="mm"><b>04</b>Uzak kaldıkların</span></div>' + rows + '</div>' +
+      (cfg.mutfakForm ? '' : '<div class="sec" style="padding-top:14px;padding-bottom:14px"><span class="muted" style="font-size:14px">Detaylı kayıt gizli. Ayarlar → Arşivde kayıt göster.</span></div>');
+  }
+
+  function deckBar(d) {
+    var pct = d.total ? Math.round(d.seen / d.total * 100) : 0;
+    return '<div class="dbar"><i style="width:' + pct + '%"></i></div><div class="mm muted" style="text-transform:none;letter-spacing:0;margin-top:6px">' + d.seen.toLocaleString('tr-TR') + ' / ' + d.total.toLocaleString('tr-TR') + ' kart · %' + pct + ' · ' + fmtDay(d.date) + '</div>';
+  }
+  function deckRows(s) {
+    var ids = C.SUBJECTS.filter(function (x) { return s.deckCounts[x.id] || (s.decks[x.id] && s.decks[x.id] !== 'locked'); });
+    if (!ids.length) return '<p class="empty">Henüz deste sayısı yok. Haftada bir Anki’den görülen kart sayısını bana gönder, buraya işlerim.</p>';
+    return ids.map(function (x) {
+      var d = s.deckCounts[x.id];
+      return '<button class="subj-row" data-act="subject" data-v="' + x.id + '" style="display:block"><span class="nm">' + esc(x.name) + '</span>' + (d ? deckBar(d) : '<div class="mm muted" style="text-transform:none;letter-spacing:0;margin-top:4px">Açık · sayı henüz girilmedi</div>') + '</button>';
+    }).join('');
   }
 
   var form = { subject: null, minutes: 60, questions: 0, day: 0 };
@@ -244,7 +264,7 @@
     var logs = C.live(data).filter(function (e) { return (e.type === 'study' && e.subject === id) || (e.type === 'book' && e.book.indexOf(id + '-') === 0); })
       .sort(function (a, b) { return a.t < b.t ? 1 : -1; }).slice(0, 30);
     var logHtml = logs.length ? logs.map(function (e) {
-      var what = e.type === 'study' ? (e.kind === 'read' ? 'Okuma' : 'Doldurma') + ' · ' + C.fmtMinutes(e.minutes || 0) + (e.pages ? ' · ' + e.pages + ' s' : '') + (e.questions ? ' · ' + e.questions + ' soru' : '')
+      var what = e.type === 'study' ? (e.kind === 'read' ? 'Tekrar' : 'Doldurma') + ' · ' + C.fmtMinutes(e.minutes || 0) + (e.pages ? ' · ' + e.pages + ' s' : '') + (e.questions ? ' · ' + e.questions + ' soru' : '')
         : bookName(e.book) + ' · ' + { start: 'başlandı', filled: 'dolduruldu', readStart: 'okumaya başlandı', readDone: 'okuma bitti' }[e.action];
       return '<div class="log-row"><span class="d">' + fmtDay(e.date) + '</span><span style="font-size:15px">' + esc(what) + '</span><button data-act="del" data-v="' + e.id + '" aria-label="Kaydı sil">×</button></div>';
     }).join('') : '<p class="empty">Bu derse ait kayıt yok.</p>';
@@ -256,7 +276,7 @@
       '<div class="sec"><div class="sec-h"><span class="mm"><b>01</b>Kitaplar</span></div>' +
       '<div class="book-head"><span></span><span>Başla</span><span>Doldur</span><span>Oku 1</span><span>Oku 2</span><span>Oku 3</span></div>' +
       vols.map(function (b) { return bookRow(b, s.books[b.key]); }).join('') + '</div>' +
-      '<div class="sec"><div class="sec-h"><span class="mm"><b>02</b>Anki alt destesi</span></div><div class="deck">' +
+      '<div class="sec"><div class="sec-h"><span class="mm"><b>02</b>Anki alt destesi</span></div>' + (s.deckCounts[id] ? '<div style="margin-bottom:14px">' + deckBar(s.deckCounts[id]) + '</div>' : '') + '<div class="deck">' +
       DECK.map(function (d) { return '<button data-act="deck" data-v="' + d[0] + '" class="' + (deck === d[0] ? 'on' : '') + '">' + d[1] + '</button>'; }).join('') + '</div></div>' +
       '<div class="sec"><div class="sec-h"><span class="mm"><b>03</b>Son kayıtlar</span></div>' + logHtml + '</div>';
   }
@@ -264,9 +284,61 @@
   // ---------- Sheets ----------
   var add = { subject: null, minutes: 60, questions: 0, day: 0, kind: 'fill', pages: 0 };
   function openSheet(html, mutfakStyle) {
+    var el = $sheet.querySelector('.sheet');
+    if (el && !el.classList.contains('closing')) { el.innerHTML = html; el.classList.toggle('m', !!mutfakStyle); return; }
     $sheet.innerHTML = '<div class="scrim" data-act="close"></div><div class="sheet' + (mutfakStyle ? ' m' : '') + '" role="dialog" aria-modal="true">' + html + '</div>';
   }
-  function closeSheet() { $sheet.innerHTML = ''; }
+  function closeSheet() {
+    var el = $sheet.querySelector('.sheet'), sc = $sheet.querySelector('.scrim');
+    if (!el) return;
+    el.style.transform = ''; el.classList.add('closing'); if (sc) sc.classList.add('closing');
+    setTimeout(function () { if (el.classList.contains('closing')) $sheet.innerHTML = ''; }, 240);
+  }
+  function sheetOpen() { var el = $sheet.querySelector('.sheet'); return !!el && !el.classList.contains('closing'); }
+
+  // drag a sheet down to close it (only when its content is scrolled to the top)
+  (function () {
+    var startY = null, dy = 0, el = null, t0 = 0;
+    document.addEventListener('touchstart', function (e) {
+      el = e.target.closest('.sheet'); if (!el || el.scrollTop > 0) { el = null; return; }
+      startY = e.touches[0].clientY; dy = 0; t0 = Date.now();
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!el || startY === null) return;
+      dy = e.touches[0].clientY - startY;
+      if (dy > 0 && el.scrollTop <= 0) { e.preventDefault(); el.style.transition = 'none'; el.style.transform = 'translateY(' + dy + 'px)'; var sc = $sheet.querySelector('.scrim'); if (sc) sc.style.opacity = String(Math.max(0, 1 - dy / 400)); }
+    }, { passive: false });
+    document.addEventListener('touchend', function () {
+      if (!el || startY === null) return;
+      var v = dy / Math.max(1, Date.now() - t0);
+      el.style.transition = '';
+      var sc = $sheet.querySelector('.scrim'); if (sc) sc.style.opacity = '';
+      if (dy > 110 || (dy > 40 && v > 0.6)) { el.style.transform = 'translateY(' + dy + 'px)'; requestAnimationFrame(function () { closeSheet(); }); }
+      else el.style.transform = '';
+      startY = null; el = null;
+    });
+  })();
+
+  // pull the Arşiv strip up to open it
+  (function () {
+    var startY = null, dy = 0, strip = null;
+    document.addEventListener('touchstart', function (e) {
+      strip = e.target.closest('.mutfak-strip'); if (!strip) return;
+      startY = e.touches[0].clientY; dy = 0;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (!strip || startY === null) return;
+      dy = Math.min(0, e.touches[0].clientY - startY);
+      strip.style.transition = 'none'; strip.style.transform = 'translateY(' + (dy * 0.6) + 'px)'; strip.style.height = 'calc(88px + var(--safe-bottom) + ' + (-dy * 0.6) + 'px)';
+    }, { passive: true });
+    document.addEventListener('touchend', function () {
+      if (!strip || startY === null) return;
+      var s0 = strip; s0.style.transition = ''; s0.style.transform = ''; s0.style.height = '';
+      if (dy < -50) { suppressClick = true; go('mutfak'); }
+      startY = null; strip = null;
+    });
+  })();
+  var suppressClick = false;
 
   function addSheet() {
     var subj = C.SUBJECTS.map(function (x) { return '<button class="chip' + (add.subject === x.id ? ' on' : '') + '" data-act="a-subj" data-v="' + x.id + '">' + esc(x.name) + '</button>'; }).join('');
@@ -277,7 +349,7 @@
     openSheet('<div class="grab"></div><div class="sheet-head"><h2>Ne çalıştın?</h2><button class="link" data-act="close">Kapat</button></div>' +
       '<div class="field"><span class="mono">Ders</span><div class="chips">' + subj + '</div></div>' +
       '<div class="field"><span class="mono">Süre</span><div class="grid4">' + durs + '</div></div>' +
-      '<div class="field"><span class="mono">Ne yaptın?</span><div class="chips"><button class="chip' + (add.kind === 'fill' ? ' on' : '') + '" data-act="a-kind" data-v="fill">Doldurma</button><button class="chip' + (add.kind === 'read' ? ' on' : '') + '" data-act="a-kind" data-v="read">Okuma / tekrar</button></div><div class="note">Doldurma: Cortex videosu + kitaba yazma. Okuma: doldurduğun kitabı baştan okuma.</div></div>' +
+      '<div class="field"><span class="mono">Ne yaptın?</span><div class="chips"><button class="chip' + (add.kind === 'fill' ? ' on' : '') + '" data-act="a-kind" data-v="fill">Doldurma</button><button class="chip' + (add.kind === 'read' ? ' on' : '') + '" data-act="a-kind" data-v="read">Tekrar (okuma)</button></div><div class="note">Doldurma: Cortex videosu + kitaba yazma. Tekrar: doldurduğun kitabı açıp baştan okuma.</div></div>' +
       '<div class="stepper-row" style="border-bottom:none"><div><div class="mono">Kaç sayfa?</div><div class="note">İsteğe bağlı</div></div><div class="stepper">' +
         '<button data-act="a-p" data-v="-5" aria-label="5 azalt">−</button><output>' + add.pages + '</output><button data-act="a-p" data-v="5" aria-label="5 artır">+</button></div></div>' +
       '<div class="stepper-row"><div><div class="mono">Soru da çözdün mü?</div><div class="note">İsteğe bağlı</div></div><div class="stepper">' +
@@ -318,11 +390,11 @@
       '<p class="note">Veri reposu: ' + esc(cfg.owner + '/' + cfg.repo) + '. Anahtar sadece bu cihazda saklanır.</p>' +
       '<button class="save" data-act="s-token"><span>Kaydet ve dene</span><small>' + (tokenSet ? 'Bağlı' : 'Bağlı değil') + '</small></button>' +
       (msg ? '<p class="' + (msg.ok ? 'note' : 'err') + '">' + esc(msg.text) + '</p>' : '') + '</div>' +
-      '<div class="toggle-row"><div><div style="font-size:16px">Mutfakta kayıt göster</div><div class="note">Tuş takımlı detaylı kayıt formu</div></div><button class="switch' + (cfg.mutfakForm ? ' on' : '') + '" data-act="s-form" aria-label="Mutfakta kayıt göster" aria-pressed="' + cfg.mutfakForm + '"></button></div>' +
+      '<div class="toggle-row"><div><div style="font-size:16px">Arşivde kayıt göster</div><div class="note">Tuş takımlı detaylı kayıt formu</div></div><button class="switch' + (cfg.mutfakForm ? ' on' : '') + '" data-act="s-form" aria-label="Arşivde kayıt göster" aria-pressed="' + cfg.mutfakForm + '"></button></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Şimdi senkronla</div><div class="note">' + (cfg.lastSync ? 'Son: ' + new Date(cfg.lastSync).toLocaleString('tr-TR') : 'Henüz senkron olmadı') + (ui.syncMsg ? ' · ' + esc(ui.syncMsg) : '') + '</div></div><button class="link" data-act="s-sync">Senkronla</button></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Yedek indir</div><div class="note">Bütün kayıtlar tek dosya (JSON)</div></div><button class="link" data-act="s-export">İndir</button></div>' +
       (tokenSet ? '<div class="toggle-row"><div><div style="font-size:16px">Anahtarı bu cihazdan sil</div><div class="note">Kayıtlar silinmez</div></div><button class="link" style="color:#B23A0E" data-act="s-forget">Sil</button></div>' : '') +
-      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.0</p>');
+      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.1</p>');
   }
 
   function setupScreen(msg) {
@@ -342,8 +414,25 @@
     $toast.innerHTML = '<div class="toast" role="status"><span>' + esc(text) + '</span>' + (buttons || []).map(function (b) {
       return '<button class="' + (b.alt ? 'alt' : '') + '" data-act="' + b.act + '" data-v="' + esc(b.v || '') + '">' + esc(b.label) + '</button>';
     }).join('') + '</div>';
-    toastTimer = setTimeout(function () { $toast.innerHTML = ''; }, ms || 6000);
+    toastTimer = setTimeout(hideToast, ms || 6000);
   }
+
+  // ---------- navigation with motion ----------
+  var navBusy = false;
+  function go(view, extra) {
+    if (navBusy) return;
+    var cur = $app.querySelector('.screen');
+    var leaving = view === 'mutfak' ? 'leave-up' : 'leave-down';
+    var entering = view === 'mutfak' ? 'enter-up' : 'enter-down';
+    navBusy = true;
+    if (cur) cur.classList.add(leaving);
+    setTimeout(function () {
+      ui.view = view; if (extra) extra();
+      ui.enter = entering; render(); window.scrollTo(0, 0); navBusy = false;
+    }, cur ? 170 : 0);
+  }
+
+  function hideToast() { var t = $toast.querySelector('.toast'); if (!t) return; t.classList.add('closing'); setTimeout(function () { if (t.parentNode) $toast.innerHTML = ''; }, 200); }
 
   // ---------- render ----------
   var setupMsg = null;
@@ -351,6 +440,7 @@
     var now = new Date(), s = C.derive(data, now);
     if (!cfg.token && !cfg.setupSkipped) { $app.innerHTML = setupScreen(setupMsg); return; }
     $app.innerHTML = ui.view === 'mutfak' ? renderMutfak(s) : renderSalon(s, now);
+    if (ui.enter) { var sc = $app.querySelector(ui.enter === 'enter-fade' ? '.m-body' : '.screen'); if (sc) sc.classList.add(ui.enter); ui.enter = null; }
     document.querySelector('meta[name="theme-color"]').setAttribute('content', ui.view === 'mutfak' ? '#F3EFE7' : '#EDECEA');
   }
 
@@ -358,7 +448,7 @@
     var el = document.getElementById('tok'); var v = el ? el.value.trim() : '';
     if (!v) { if (cfg.token) { doSync(); closeSheet(); } return; }
     var test = await S.test(Object.assign({}, cfg, { token: v }));
-    var inSettings = !!$sheet.innerHTML;
+    var inSettings = sheetOpen();
     if (test) { if (inSettings) settingsSheet({ ok: false, text: test }); else { setupMsg = { ok: false, text: test }; render(); } return; }
     cfg.token = v; cfg.setupSkipped = false; saveCfg(); setupMsg = null;
     await doSync();
@@ -372,10 +462,13 @@
     var act = el.getAttribute('data-act'), v = el.getAttribute('data-v');
     var today = C.dateKey(new Date());
     switch (act) {
-      case 'mutfak': ui.view = 'mutfak'; ui.subject = null; render(); window.scrollTo(0, 0); break;
-      case 'salon': ui.view = 'salon'; ui.subject = null; ui.factIdx++; render(); window.scrollTo(0, 0); break;
-      case 'tab': ui.tab = v; ui.subject = null; render(); window.scrollTo(0, 0); break;
-      case 'subject': ui.view = 'mutfak'; ui.subject = v; render(); window.scrollTo(0, 0); break;
+      case 'mutfak': if (suppressClick) { suppressClick = false; break; } go('mutfak', function () { ui.subject = null; }); break;
+      case 'salon': go('salon', function () { ui.subject = null; ui.factIdx++; }); break;
+      case 'tab': ui.tab = v; ui.subject = null; ui.enter = 'enter-fade'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+      case 'subject':
+        if (ui.view !== 'mutfak') go('mutfak', function () { ui.subject = v; });
+        else { ui.subject = v; ui.enter = 'enter-fade'; render(); window.scrollTo(0, 0); }
+        break;
       case 'close': closeSheet(); break;
       case 'settings': settingsSheet(); break;
       case 'skip': cfg.setupSkipped = true; saveCfg(); render(); break;
@@ -429,8 +522,8 @@
         toast('Bugünkü Anki kaldırıldı', [{ act: 'restore', v: todays.map(function (x) { return x.id; }).join(','), label: 'Geri al' }]);
         break;
 
-      case 'undo': removeEvent(v); $toast.innerHTML = ''; break;
-      case 'restore': v.split(',').forEach(restoreEvent); $toast.innerHTML = ''; break;
+      case 'undo': removeEvent(v); hideToast(); break;
+      case 'restore': v.split(',').forEach(restoreEvent); hideToast(); break;
       case 'del':
         removeEvent(v);
         toast('Kayıt silindi', [{ act: 'restore', v: v, label: 'Geri al' }]);
@@ -461,7 +554,7 @@
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { render(); scheduleSync(0); } });
   window.addEventListener('online', function () { scheduleSync(0); });
   setInterval(function () { if (document.visibilityState === 'visible') { scheduleSync(0); } }, 90000);
-  setInterval(function () { if (document.visibilityState === 'visible' && !$sheet.innerHTML) render(); }, 60000);
+  setInterval(function () { if (document.visibilityState === 'visible' && !sheetOpen()) render(); }, 60000);
 
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
 

@@ -52,7 +52,8 @@ const ev = (o) => Object.assign({ id: C.newId(), t: T(24) }, o);
     ] };
     const s = C.derive(d, now);
     assert.strictEqual(s.weekFill, 50); assert.strictEqual(s.weekRead, 15); assert.strictEqual(s.weekCards, 300);
-    assert.ok(C.facts(s).indexOf('Bu hafta 50 sayfa doldurdun, 15 sayfa okudun.') >= 0);
+    assert.strictEqual(s.weekPages, 65);
+    assert.ok(C.facts(s).indexOf('Bu hafta 65 sayfa çalıştın: 50 sayfa doldurma, 15 sayfa tekrar.') >= 0);
   });
 
   await test('study totals, week, gaps, last study', () => {
@@ -150,6 +151,13 @@ const ev = (o) => Object.assign({ id: C.newId(), t: T(24) }, o);
   await test('facts mention the neglected subject', () => {
     const d = { events: [ev({ type: 'study', date: '2026-11-01', subject: 'farmakoloji', minutes: 60, t: T(1) }), ev({ type: 'study', date: '2026-11-24', subject: 'patoloji', minutes: 60 })] };
     assert.ok(C.facts(C.derive(d, now)).some((f) => f === '23 gündür Farmakoloji çalışmadın.'));
+  });
+
+  await test('deck progress: latest count per subject', () => {
+    const d = { events: [ev({ type: 'deckCount', subject: 'patoloji', seen: 400, total: 2800, t: T(20), date: '2026-11-20' }), ev({ type: 'deckCount', subject: 'patoloji', seen: 700, total: 2800, date: '2026-11-24' })] };
+    const s = C.derive(d, now);
+    assert.deepStrictEqual(s.deckCounts.patoloji, { seen: 700, total: 2800, date: '2026-11-24' });
+    assert.ok(C.facts(s).some((f) => f === 'Patoloji Anki destesinin %25’ini gördün (700 / 2800 kart).'));
   });
 
   console.log(n + ' passed');
