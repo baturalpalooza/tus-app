@@ -327,7 +327,7 @@
 
   function setupScreen(msg) {
     return '<div class="screen salon" style="padding-bottom:0"><div class="hero" style="height:calc(220px + var(--safe-top))">' + heroSvg(0.15) + '</div>' +
-      '<div class="setup"><h1>TUS Defter</h1>' +
+      '<div class="setup"><h1>TUS</h1>' +
       '<p class="note" style="font-size:16px;color:#1C1C1E">Kayıtların gizli <b>' + esc(cfg.owner + '/' + cfg.repo) + '</b> reposunda durur. iPhone, iPad ve Mac aynı veriyi görür. Bunun için bu cihaza bir kez erişim anahtarı gir.</p>' +
       '<input class="input" id="tok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">' +
       '<button class="save" data-act="s-token"><span>Bağlan</span><small>Anahtarı dene</small></button>' +
@@ -452,7 +452,7 @@
       case 's-sync': doSync().then(function () { settingsSheet({ ok: ui.syncState === 'ok', text: ui.syncState === 'ok' ? 'Senkronlandı.' : 'Hata: ' + ui.syncMsg }); }); break;
       case 's-export':
         var blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tus-defter-' + today + '.json'; a.click();
+        var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tus-' + today + '.json'; a.click();
         break;
       case 's-forget': cfg.token = ''; cfg.setupSkipped = true; saveCfg(); ui.syncState = 'idle'; settingsSheet(); render(); break;
     }

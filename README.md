@@ -1,4 +1,4 @@
-# TUS Defter
+# TUS
 
 A private study tracker for TUS preparation. Phone-first web app (PWA), installed from Safari with **Share → Add to Home Screen**.
 
