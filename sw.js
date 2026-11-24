@@ -1,5 +1,5 @@
 // sw.js — offline shell. Bump VERSION on every release so phones pick up the new files.
-var VERSION = 'tus-v1.2.0';
+var VERSION = 'tus-v1.2.1';
 var SHELL = ['./', 'index.html', 'style.css', 'core.js', 'sync.js', 'app.js', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -26,7 +26,8 @@ self.addEventListener('fetch', function (e) {
   }
   if (url.origin !== location.origin) return;
   // app files: network first (fresh when online), cache when offline
-  e.respondWith(fetch(e.request).then(function (res) {
+  // cache: 'no-cache' revalidates with GitHub Pages instead of trusting its 10-minute max-age
+  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then(function (res) {
     var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put(e.request, copy); });
     return res;
   }).catch(function () { return caches.match(e.request, { ignoreSearch: true }); }));

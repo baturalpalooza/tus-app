@@ -444,7 +444,7 @@
       '<div class="toggle-row"><div><div style="font-size:16px">Şimdi senkronla</div><div class="note">' + (cfg.lastSync ? 'Son: ' + new Date(cfg.lastSync).toLocaleString('tr-TR') : 'Henüz senkron olmadı') + (ui.syncMsg ? ' · ' + esc(ui.syncMsg) : '') + '</div></div><button class="link" data-act="s-sync">Senkronla</button></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Yedek indir</div><div class="note">Bütün kayıtlar tek dosya (JSON)</div></div><button class="link" data-act="s-export">İndir</button></div>' +
       (tokenSet ? '<div class="toggle-row"><div><div style="font-size:16px">Anahtarı bu cihazdan sil</div><div class="note">Kayıtlar silinmez</div></div><button class="link danger" data-act="s-forget">Sil</button></div>' : '') +
-      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.2</p>');
+      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.2.1</p>');
   }
 
   function setupScreen(msg) {
@@ -633,7 +633,17 @@
   setInterval(function () { if (document.visibilityState === 'visible') { scheduleSync(0); } }, 90000);
   setInterval(function () { if (document.visibilityState === 'visible' && !sheetOpen()) render(); }, 60000);
 
-  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js');
+  // Updates: check for a new version on every open / return to the app; reload once when it takes over.
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    var swReg = null, hadController = !!navigator.serviceWorker.controller, reloading = false;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (r) { swReg = r; r.update(); });
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadController) { hadController = true; return; } // first install: nothing to refresh
+      if (reloading || sheetOpen()) return;
+      reloading = true; location.reload();
+    });
+    document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && swReg) swReg.update(); });
+  }
 
   render();
   scheduleSync(0);
