@@ -12,7 +12,17 @@
   function save(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) { /* storage full or blocked */ } }
 
   var data = load(LS_DATA, C.emptyData());
-  var cfg = Object.assign({ owner: 'baturalpalooza', repo: 'tus-data', path: 'data.json', token: '', mutfakForm: false, setupSkipped: false }, load(LS_CFG, {}));
+  var cfg = Object.assign({ owner: 'baturalpalooza', repo: 'tus-data', path: 'data.json', token: '', mutfakForm: false, setupSkipped: false, theme: 'auto' }, load(LS_CFG, {}));
+  var darkMQ = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() { return cfg.theme === 'dark' || (cfg.theme === 'auto' && darkMQ && darkMQ.matches); }
+  function applyTheme() {
+    var dark = isDark();
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-view', ui.view === 'mutfak' ? 'arsiv' : 'home');
+    var bg = ui.view === 'mutfak' ? (dark ? '#1B1A16' : '#F3EFE7') : (dark ? '#131315' : '#EDECEA');
+    document.querySelector('meta[name="theme-color"]').setAttribute('content', bg);
+  }
+  if (darkMQ && darkMQ.addEventListener) darkMQ.addEventListener('change', function () { applyTheme(); render(); });
   var ui = { view: 'salon', tab: 'zincir', subject: null, syncState: 'idle', syncMsg: '', factIdx: Math.floor(Math.random() * 100) };
 
   function persist() { save(LS_DATA, data); }
@@ -100,15 +110,19 @@
   }
   function heroSvg(f) {
     // f: 0 = just studied (warm sunset) .. 1 = long gap (cool dusk)
-    var warm = ['#8F9AD0', '#B8B2D3', '#F2B48C', '#F0662C'], cool = ['#7F90C6', '#A3B1DA', '#C3CEEA', '#9DB3E6'];
+    var dark = isDark();
+    var warm = dark ? ['#1C2142', '#3B3260', '#8A4A52', '#C4552A'] : ['#8F9AD0', '#B8B2D3', '#F2B48C', '#F0662C'];
+    var cool = dark ? ['#151A33', '#232C52', '#33406E', '#3E4F86'] : ['#7F90C6', '#A3B1DA', '#C3CEEA', '#9DB3E6'];
     var c = warm.map(function (w, i) { return mix(w, cool[i], f); });
-    var glow = (0.95 * (1 - f)).toFixed(2);
+    var glow = ((dark ? 0.6 : 0.95) * (1 - f)).toFixed(2);
     return '<svg viewBox="0 0 390 300" preserveAspectRatio="none" aria-hidden="true"><defs>' +
       '<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="0.45" stop-color="' + c[1] + '"/><stop offset="0.78" stop-color="' + c[2] + '"/><stop offset="1" stop-color="' + c[3] + '"/></linearGradient>' +
       '<radialGradient id="glow" cx="0.5" cy="1.08" r="0.62"><stop offset="0" stop-color="#FF5A1F" stop-opacity="' + glow + '"/><stop offset="1" stop-color="#FF5A1F" stop-opacity="0"/></radialGradient>' +
       '<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 0.28"/></feComponentTransfer></filter>' +
       '</defs><rect width="390" height="300" fill="url(#sky)"/><rect width="390" height="300" fill="url(#glow)"/><rect width="390" height="300" filter="url(#grain)"/></svg>';
   }
+  var MONTHS = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+  var DAYS = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
   function gauge(p) { p = Math.max(0, Math.min(1, p)); return '<div class="gauge"><i style="top:' + Math.round(p * 50) + 'px"></i></div>'; }
   function bookName(key) { var b = C.allBooks().filter(function (x) { return x.key === key; })[0]; return b ? b.name + ' ' + b.vol : key; }
   function fmtDay(k) { var p = k.split('-'); return p[2] + '.' + p[1]; }
@@ -134,12 +148,13 @@
           '<span><i class="dot' + (studiedToday ? ' on' : '') + '" style="' + (studiedToday ? 'background:#F2A65A' : '') + '"></i>Çalışma' + (studiedToday ? ' ✓' : '') + '</span>' +
           '<span><i class="dot' + (runningBook ? ' on' : '') + '" style="' + (runningBook ? 'background:#B8B2D3' : '') + '"></i>Kitap</span>' +
         '</div>' +
-        '<button class="hero-gear" data-act="settings" aria-label="Ayarlar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1C1C1E" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></button>' +
+        '<button class="hero-gear" data-act="settings" aria-label="Ayarlar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></button>' +
+        '<div class="hero-date"><b>' + now.getDate() + ' ' + MONTHS[now.getMonth()] + '</b><span>' + DAYS[now.getDay()] + '</span></div>' +
         '<div class="sync-badge" data-badge>' + esc(badgeText()) + '</div>' +
       '</div>' +
       '<div class="pad">' +
         '<div class="last-row"><div><div class="mono" style="font-size:12px">Son çalışma</div><div class="sub">' + (last ? esc((C.subjectById(last.subject) || {}).name || 'Genel') + ' · ' + C.fmtMinutes(last.minutes || 0) : 'Henüz kayıt yok') + '</div></div>' +
-        '<span class="mono" style="font-size:12px;letter-spacing:.1em">' + fmtDay(s.today) + '.' + s.today.slice(0, 4) + '</span></div>' +
+        '</div>' +
         (since ? '<div class="big"><b>' + since.big + '</b><span>' + since.unit + '</span></div>' : '<div class="big"><b>—</b></div>') +
         '<div class="chain-head"><span class="mono">Anki zinciri</span><span class="v">' + s.streak + ' gün <small>' + (s.ankiToday ? 'kırılmadı' : (s.streak ? 'bugün bekliyor' : '')) + '</small></span></div>' +
         '<div class="chain" style="grid-template-columns:repeat(26,1fr)">' + chainCells(s, 26) + '</div>' +
@@ -156,7 +171,7 @@
         '<div class="actions"><button class="btn dark" data-act="add">+ Kayıt</button>' +
           (s.ankiToday ? '<button class="btn done" data-act="anki-edit">Anki ✓' + (s.anki[s.today].cards ? ' · ' + s.anki[s.today].cards : '') + '</button>' : '<button class="btn" data-act="anki">Anki ✓</button>') + '</div>' +
       '</div>' +
-      '<button class="mutfak-strip" data-act="mutfak"><span class="grip"></span><b>↑ Arşiv</b><span>Zincir · Kitaplar · Dersler</span></button>' +
+      '<button class="mutfak-strip" data-act="mutfak"><span class="grip"></span><b class="lbl-idle">↑ Arşiv</b><b class="lbl-armed">Bırak · Arşiv</b><span>Yukarı çek ya da dokun</span></button>' +
     '</div>';
   }
   function stat(label, value, p, sub) {
@@ -170,6 +185,7 @@
       return '<button data-act="tab" data-v="' + t + '" class="' + (ui.tab === t && !ui.subject ? 'on' : '') + '">' + { zincir: 'Zincir', kitaplar: 'Kitaplar', dersler: 'Dersler' }[t] + '</button>';
     }).join('');
     return '<div class="screen mutfak">' +
+      '<div class="pull-top"><span>↓ Ana sayfa</span></div>' +
       '<div class="m-top"><div class="m-top-row"><span class="mm" style="font-weight:700">TUS / Arşiv</span>' +
       '<button class="mm muted" data-act="settings">⚙ Ayarlar</button></div><div class="m-tabs">' + tabs + '</div></div>' +
       '<div class="m-body">' + body + '</div>' +
@@ -319,23 +335,55 @@
     });
   })();
 
-  // pull the Arşiv strip up to open it
+  // haptic "tick" (iOS 18+ Safari fires one when a switch input toggles; elsewhere vibrate if possible)
+  function tick() {
+    try {
+      if (navigator.vibrate) { navigator.vibrate(8); return; }
+      var l = document.createElement('label'), i = document.createElement('input');
+      i.type = 'checkbox'; i.setAttribute('switch', ''); l.appendChild(i); l.style.display = 'none';
+      document.body.appendChild(l); l.click(); l.remove();
+    } catch (e) { /* no haptics here */ }
+  }
+
+  // Pull past the end of a page to switch: bottom of Ana sayfa -> Arşiv, top of Arşiv -> Ana sayfa.
+  var PULL = 80;
   (function () {
-    var startY = null, dy = 0, strip = null;
+    var y0 = null, edgeY = null, pull = 0, armed = false, fromStrip = false;
+    function atBottom() { return window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2; }
+    function atTop() { return window.scrollY <= 0; }
+    function hint() { return document.querySelector(ui.view === 'mutfak' ? '.pull-top' : '.mutfak-strip'); }
+    function show(p) {
+      var h = hint(); if (!h) return;
+      var nowArmed = p >= PULL;
+      if (nowArmed && !armed) tick();
+      armed = nowArmed;
+      h.classList.toggle('armed', armed);
+      if (ui.view === 'mutfak') { h.style.transition = 'none'; h.style.opacity = String(Math.min(1, p / PULL)); h.style.transform = 'translateY(' + Math.min(p * 0.5, 60) + 'px)'; }
+      else { h.style.transition = 'none'; h.style.height = 'calc(88px + var(--safe-bottom) + ' + Math.min(p * 0.6, 90) + 'px)'; }
+    }
+    function reset() { var h = hint(); if (!h) return; h.style.transition = ''; h.style.opacity = ''; h.style.transform = ''; h.style.height = ''; h.classList.remove('armed'); }
     document.addEventListener('touchstart', function (e) {
-      strip = e.target.closest('.mutfak-strip'); if (!strip) return;
-      startY = e.touches[0].clientY; dy = 0;
+      if (sheetOpen() || navBusy || !document.querySelector('.screen')) { y0 = null; return; }
+      y0 = e.touches[0].clientY; edgeY = null; pull = 0; armed = false;
+      fromStrip = !!e.target.closest('.mutfak-strip');
     }, { passive: true });
     document.addEventListener('touchmove', function (e) {
-      if (!strip || startY === null) return;
-      dy = Math.min(0, e.touches[0].clientY - startY);
-      strip.style.transition = 'none'; strip.style.transform = 'translateY(' + (dy * 0.6) + 'px)'; strip.style.height = 'calc(88px + var(--safe-bottom) + ' + (-dy * 0.6) + 'px)';
+      if (y0 === null) return;
+      var y = e.touches[0].clientY;
+      if (ui.view === 'mutfak') {
+        if (atTop() && y > y0) { if (edgeY === null) edgeY = Math.max(y0, y - 1); pull = Math.max(0, y - edgeY); }
+        else { edgeY = null; pull = 0; }
+      } else {
+        if ((fromStrip || atBottom()) && y < y0) { if (edgeY === null) edgeY = fromStrip ? y0 : Math.min(y0, y + 1); pull = Math.max(0, edgeY - y); }
+        else { edgeY = null; pull = 0; }
+      }
+      show(pull);
     }, { passive: true });
     document.addEventListener('touchend', function () {
-      if (!strip || startY === null) return;
-      var s0 = strip; s0.style.transition = ''; s0.style.transform = ''; s0.style.height = '';
-      if (dy < -50) { suppressClick = true; go('mutfak'); }
-      startY = null; strip = null;
+      if (y0 === null) return;
+      var go2 = armed; y0 = null; reset();
+      if (go2) { suppressClick = true; setTimeout(function () { suppressClick = false; }, 400); go(ui.view === 'mutfak' ? 'salon' : 'mutfak'); }
+      armed = false; pull = 0;
     });
   })();
   var suppressClick = false;
@@ -379,7 +427,7 @@
       '<div class="grid4">' + quick + '</div>' +
       '<div class="field"><span class="mono">Süre</span><div class="grid4">' + mins + '</div></div>' +
       '<button class="save" data-act="k-save"><span>Kaydet</span><small>' + (ak.cards ? ak.cards + ' kart' : 'kart yok') + (ak.minutes ? ' · ' + ak.minutes + ' dk' : '') + '</small></button>' +
-      '<button class="link" style="color:#B23A0E;align-self:flex-start" data-act="anki-undo">Bugünkü Anki’yi kaldır</button>');
+      '<button class="link" class="danger" style="align-self:flex-start" data-act="anki-undo">Bugünkü Anki’yi kaldır</button>');
   }
 
   function settingsSheet(msg) {
@@ -390,17 +438,19 @@
       '<p class="note">Veri reposu: ' + esc(cfg.owner + '/' + cfg.repo) + '. Anahtar sadece bu cihazda saklanır.</p>' +
       '<button class="save" data-act="s-token"><span>Kaydet ve dene</span><small>' + (tokenSet ? 'Bağlı' : 'Bağlı değil') + '</small></button>' +
       (msg ? '<p class="' + (msg.ok ? 'note' : 'err') + '">' + esc(msg.text) + '</p>' : '') + '</div>' +
+      '<div class="toggle-row"><div><div style="font-size:16px">Görünüm</div><div class="note">Otomatik: telefonun ayarını izler</div></div><div class="seg">' +
+        [['auto', 'Otomatik'], ['light', 'Açık'], ['dark', 'Koyu']].map(function (t) { return '<button class="' + (cfg.theme === t[0] ? 'on' : '') + '" data-act="s-theme" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Arşivde kayıt göster</div><div class="note">Tuş takımlı detaylı kayıt formu</div></div><button class="switch' + (cfg.mutfakForm ? ' on' : '') + '" data-act="s-form" aria-label="Arşivde kayıt göster" aria-pressed="' + cfg.mutfakForm + '"></button></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Şimdi senkronla</div><div class="note">' + (cfg.lastSync ? 'Son: ' + new Date(cfg.lastSync).toLocaleString('tr-TR') : 'Henüz senkron olmadı') + (ui.syncMsg ? ' · ' + esc(ui.syncMsg) : '') + '</div></div><button class="link" data-act="s-sync">Senkronla</button></div>' +
       '<div class="toggle-row"><div><div style="font-size:16px">Yedek indir</div><div class="note">Bütün kayıtlar tek dosya (JSON)</div></div><button class="link" data-act="s-export">İndir</button></div>' +
-      (tokenSet ? '<div class="toggle-row"><div><div style="font-size:16px">Anahtarı bu cihazdan sil</div><div class="note">Kayıtlar silinmez</div></div><button class="link" style="color:#B23A0E" data-act="s-forget">Sil</button></div>' : '') +
-      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.1</p>');
+      (tokenSet ? '<div class="toggle-row"><div><div style="font-size:16px">Anahtarı bu cihazdan sil</div><div class="note">Kayıtlar silinmez</div></div><button class="link danger" data-act="s-forget">Sil</button></div>' : '') +
+      '<p class="note">' + C.live(data).length + ' kayıt · sürüm 1.2</p>');
   }
 
   function setupScreen(msg) {
     return '<div class="screen salon" style="padding-bottom:0"><div class="hero" style="height:calc(220px + var(--safe-top))">' + heroSvg(0.15) + '</div>' +
       '<div class="setup"><h1>TUS</h1>' +
-      '<p class="note" style="font-size:16px;color:#1C1C1E">Kayıtların gizli <b>' + esc(cfg.owner + '/' + cfg.repo) + '</b> reposunda durur. iPhone, iPad ve Mac aynı veriyi görür. Bunun için bu cihaza bir kez erişim anahtarı gir.</p>' +
+      '<p class="note" style="font-size:16px;color:var(--s-ink)">Kayıtların gizli <b>' + esc(cfg.owner + '/' + cfg.repo) + '</b> reposunda durur. iPhone, iPad ve Mac aynı veriyi görür. Bunun için bu cihaza bir kez erişim anahtarı gir.</p>' +
       '<input class="input" id="tok" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="github_pat_…">' +
       '<button class="save" data-act="s-token"><span>Bağlan</span><small>Anahtarı dene</small></button>' +
       (msg ? '<p class="' + (msg.ok ? 'note' : 'err') + '">' + esc(msg.text) + '</p>' : '') +
@@ -418,18 +468,44 @@
   }
 
   // ---------- navigation with motion ----------
+  // The new page slides over the old one (or the old one slides away), so there is never a blank frame.
   var navBusy = false;
   function go(view, extra) {
-    if (navBusy) return;
-    var cur = $app.querySelector('.screen');
-    var leaving = view === 'mutfak' ? 'leave-up' : 'leave-down';
-    var entering = view === 'mutfak' ? 'enter-up' : 'enter-down';
+    if (navBusy || view === ui.view) { if (view === ui.view && extra) { extra(); render(); } return; }
     navBusy = true;
-    if (cur) cur.classList.add(leaving);
-    setTimeout(function () {
+    var toArchive = view === 'mutfak';
+    var oldScreen = $app.querySelector('.screen');
+    var scrollY = window.scrollY;
+    var layer = document.createElement('div'); layer.className = 'nav-layer';
+    if (toArchive) {
+      // Arşiv comes up from below, over Ana sayfa
       ui.view = view; if (extra) extra();
-      ui.enter = entering; render(); window.scrollTo(0, 0); navBusy = false;
-    }, cur ? 170 : 0);
+      layer.innerHTML = renderMutfak(C.derive(data));
+      ui.view = 'salon';
+      layer.style.transform = 'translateY(100%)';
+      document.body.appendChild(layer);
+      if (oldScreen) oldScreen.classList.add('nav-under');
+      layer.getBoundingClientRect();
+      layer.style.transform = 'translateY(0)';
+    } else {
+      // Arşiv slides down and away, Ana sayfa is already underneath
+      layer.innerHTML = $app.innerHTML;
+      document.body.appendChild(layer); layer.scrollTop = scrollY;
+      ui.view = view; if (extra) extra(); render(); window.scrollTo(0, 0);
+      var home = $app.querySelector('.screen'); if (home) home.classList.add('nav-rise');
+      layer.getBoundingClientRect();
+      layer.style.transform = 'translateY(100%)';
+    }
+    applyTheme();
+    var done = false;
+    function finish() {
+      if (done) return; done = true;
+      if (toArchive) { ui.view = view; render(); window.scrollTo(0, 0); }
+      layer.remove(); navBusy = false;
+      var h = $app.querySelector('.screen'); if (h) h.classList.remove('nav-rise', 'nav-under');
+    }
+    layer.addEventListener('transitionend', finish);
+    setTimeout(finish, 600);
   }
 
   function hideToast() { var t = $toast.querySelector('.toast'); if (!t) return; t.classList.add('closing'); setTimeout(function () { if (t.parentNode) $toast.innerHTML = ''; }, 200); }
@@ -441,7 +517,7 @@
     if (!cfg.token && !cfg.setupSkipped) { $app.innerHTML = setupScreen(setupMsg); return; }
     $app.innerHTML = ui.view === 'mutfak' ? renderMutfak(s) : renderSalon(s, now);
     if (ui.enter) { var sc = $app.querySelector(ui.enter === 'enter-fade' ? '.m-body' : '.screen'); if (sc) sc.classList.add(ui.enter); ui.enter = null; }
-    document.querySelector('meta[name="theme-color"]').setAttribute('content', ui.view === 'mutfak' ? '#F3EFE7' : '#EDECEA');
+    applyTheme();
   }
 
   async function saveToken() {
@@ -462,7 +538,7 @@
     var act = el.getAttribute('data-act'), v = el.getAttribute('data-v');
     var today = C.dateKey(new Date());
     switch (act) {
-      case 'mutfak': if (suppressClick) { suppressClick = false; break; } go('mutfak', function () { ui.subject = null; }); break;
+      case 'mutfak': if (suppressClick) break; go('mutfak', function () { ui.subject = null; }); break;
       case 'salon': go('salon', function () { ui.subject = null; ui.factIdx++; }); break;
       case 'tab': ui.tab = v; ui.subject = null; ui.enter = 'enter-fade'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
       case 'subject':
@@ -541,6 +617,7 @@
         break;
 
       case 's-token': saveToken(); break;
+      case 's-theme': cfg.theme = v; saveCfg(); applyTheme(); render(); settingsSheet(); break;
       case 's-form': cfg.mutfakForm = !cfg.mutfakForm; saveCfg(); settingsSheet(); render(); break;
       case 's-sync': doSync().then(function () { settingsSheet({ ok: ui.syncState === 'ok', text: ui.syncState === 'ok' ? 'Senkronlandı.' : 'Hata: ' + ui.syncMsg }); }); break;
       case 's-export':
